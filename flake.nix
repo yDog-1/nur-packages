@@ -12,7 +12,7 @@
       nixpkgs.lib.genAttrs systems (system:
         f (import nixpkgs {inherit system;}));
   in {
-    overlays.default = final: prev: {
+    overlays.default = final: _prev: {
       ai-usagebar = final.callPackage ./pkgs/ai-usagebar {};
     };
 
@@ -21,8 +21,47 @@
       default = ai-usagebar;
     });
 
+    formatter = forAllSystems (pkgs:
+      pkgs.writeShellApplication {
+        name = "nixfmt";
+        runtimeInputs = [pkgs.alejandra];
+        text = ''
+          if [ "$#" -eq 0 ]; then
+            set -- .
+          fi
+
+          exec alejandra "$@"
+        '';
+      });
+
+    devShells = forAllSystems (pkgs: {
+      default = pkgs.mkShell {
+        packages = with pkgs; [
+          alejandra
+          deadnix
+          nil
+          statix
+        ];
+      };
+    });
+
     checks = forAllSystems (pkgs: {
       inherit (pkgs.callPackage ./default.nix {}) ai-usagebar;
+
+      format = pkgs.runCommand "check-format" {nativeBuildInputs = [pkgs.alejandra];} ''
+        alejandra --check ${./.}
+        touch $out
+      '';
+
+      deadnix = pkgs.runCommand "check-deadnix" {nativeBuildInputs = [pkgs.deadnix];} ''
+        deadnix --fail ${./.}
+        touch $out
+      '';
+
+      statix = pkgs.runCommand "check-statix" {nativeBuildInputs = [pkgs.statix];} ''
+        statix check ${./.}
+        touch $out
+      '';
     });
   };
 }
