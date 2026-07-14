@@ -40,6 +40,7 @@
           alejandra
           deadnix
           nil
+          pre-commit
           statix
         ];
       };
