@@ -15,7 +15,6 @@ repos:
 
       - id: statix
         name: statix
-        entry: statix check .
+        entry: statix check
         language: system
-        pass_filenames: false
         types: [nix]

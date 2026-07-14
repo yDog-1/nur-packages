@@ -1,6 +1,11 @@
 {
   description = "Personal NUR packages";
 
+  nixConfig = {
+    extra-substituters = ["https://ydog-1-nur.cachix.org"];
+    extra-trusted-public-keys = ["ydog-1-nur.cachix.org-1:gw4tWFtMdLnDn2k1EMrkgUrheq8/zi8mjPQKto5PyDs="];
+  };
+
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
   outputs = {nixpkgs, ...}: let

@@ -19,6 +19,27 @@ Personal NUR packages for tools that are not available in nixpkgs yet.
 }
 ```
 
+## Binary Cache
+
+Build results are available from Cachix:
+
+```console
+cachix use ydog-1-nur
+```
+
+Flake users are prompted to trust the configured binary cache automatically.
+
+To configure the cache manually, add this to your flake:
+
+```nix
+{
+  nixConfig = {
+    extra-substituters = ["https://ydog-1-nur.cachix.org"];
+    extra-trusted-public-keys = ["ydog-1-nur.cachix.org-1:gw4tWFtMdLnDn2k1EMrkgUrheq8/zi8mjPQKto5PyDs="];
+  };
+}
+```
+
 ## NUR Usage
 
 ```nix
