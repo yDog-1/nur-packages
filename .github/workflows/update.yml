@@ -1,0 +1,33 @@
+name: Update packages
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * *"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-ai-usagebar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: cachix/install-nix-action@v31
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update ai-usagebar
+        run: nix run nixpkgs#nix-update -- --flake ai-usagebar
+
+      - name: Build ai-usagebar
+        run: nix build .#ai-usagebar
+
+      - uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "update ai-usagebar"
+          title: "update ai-usagebar"
+          body: "Automated ai-usagebar update."
+          branch: "update/ai-usagebar"
