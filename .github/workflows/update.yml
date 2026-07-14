@@ -19,8 +19,14 @@ jobs:
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Get latest ai-usagebar version
+        id: latest
+        run: |
+          version="$(curl -fsSL -A "yDog-1/nur-packages update workflow" "https://crates.io/api/v1/crates/ai-usagebar" | jq -r '.crate.max_stable_version // .crate.max_version')"
+          printf 'version=%s\n' "$version" >> "$GITHUB_OUTPUT"
+
       - name: Update ai-usagebar
-        run: nix run nixpkgs#nix-update -- --flake ai-usagebar
+        run: nix run nixpkgs#nix-update -- --flake --version "${{ steps.latest.outputs.version }}" ai-usagebar
 
       - name: Build ai-usagebar
         run: nix build .#ai-usagebar
