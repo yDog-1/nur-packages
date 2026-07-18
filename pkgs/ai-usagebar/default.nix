@@ -14,8 +14,6 @@ rustPlatform.buildRustPackage rec {
 
   cargoHash = "sha256-O4xCWUkmXT02OCueC98iY9mEu2AIjDwEUSdexBLdkYo=";
 
-  doCheck = false;
-
   meta = {
     description = "Waybar widget and TUI for AI plan usage";
     homepage = "https://github.com/akitaonrails/ai-usagebar";
