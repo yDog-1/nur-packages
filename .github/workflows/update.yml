@@ -1,44 +1,26 @@
-name: Update packages
+name: Update dependencies
 
 on:
   workflow_dispatch:
+    inputs:
+      packages:
+        description: Specific packages to update (space-separated, empty for all)
+        required: false
+        default: ""
+      inputs:
+        description: Specific flake inputs to update (space-separated, empty for all)
+        required: false
+        default: ""
   schedule:
-    - cron: "0 3 * * *"
-
-permissions:
-  contents: write
-  pull-requests: write
+    - cron: "0 3 * * 1"
 
 jobs:
-  update-ai-usagebar:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-
-      - uses: cachix/install-nix-action@a49548c11d9846ad46ecc0115273879b045f001c # v31
-        with:
-          github_access_token: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: cachix/cachix-action@5f2d7c5294214f71b873db4b969586b980625e71 # v17
-        with:
-          name: ydog-1-nur
-          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
-
-      - name: Get latest ai-usagebar version
-        id: latest
-        run: |
-          version="$(curl -fsSL -A "yDog-1/nur-packages update workflow" "https://crates.io/api/v1/crates/ai-usagebar" | jq -r '.crate.max_stable_version // .crate.max_version')"
-          printf 'version=%s\n' "$version" >> "$GITHUB_OUTPUT"
-
-      - name: Update ai-usagebar
-        run: nix run nixpkgs#nix-update -- --flake --version "${{ steps.latest.outputs.version }}" ai-usagebar
-
-      - name: Build ai-usagebar
-        run: nix build .#ai-usagebar
-
-      - uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
-        with:
-          commit-message: "update ai-usagebar"
-          title: "update ai-usagebar"
-          body: "Automated ai-usagebar update."
-          branch: "update/ai-usagebar"
+  update:
+    uses: ./.github/workflows/update-flake.yml
+    with:
+      packages: ${{ inputs.packages }}
+      inputs: ${{ inputs.inputs }}
+    secrets: inherit
+    permissions:
+      contents: write
+      pull-requests: write

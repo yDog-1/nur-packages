@@ -1,0 +1,108 @@
+name: Update flake
+
+on:
+  workflow_call:
+    inputs:
+      packages:
+        description: Space-separated packages to update (empty for all)
+        required: false
+        type: string
+        default: ""
+      inputs:
+        description: Space-separated flake inputs to update (empty for all)
+        required: false
+        type: string
+        default: ""
+    secrets:
+      CACHIX_AUTH_TOKEN:
+        required: false
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      has-updates: ${{ steps.matrix.outputs.has-updates }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - uses: cachix/install-nix-action@a49548c11d9846ad46ecc0115273879b045f001c # v31
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build update matrix
+        id: matrix
+        env:
+          PACKAGES: ${{ inputs.packages }}
+          FLAKE_INPUTS: ${{ inputs.inputs }}
+        run: |
+          # shellcheck disable=SC2016 # This is a Nix expression, not shell expansion.
+          available_packages="$(nix eval --json .#packages.x86_64-linux --apply \
+            'packages: builtins.filter (name: name != "default" && packages.${name} ? version) (builtins.attrNames packages)')"
+          available_inputs="$(jq -c '.nodes.root.inputs | keys' flake.lock)"
+
+          select_names() {
+            local available="$1"
+            local requested="$2"
+            if [[ -z "$requested" ]]; then
+              printf '%s' "$available"
+            else
+              jq -cn --argjson available "$available" --arg requested "$requested" \
+                '$requested | split(" ") | map(select(length > 0)) | map(select(. as $name | $available | index($name)))'
+            fi
+          }
+
+          packages="$(select_names "$available_packages" "$PACKAGES")"
+          inputs="$(select_names "$available_inputs" "$FLAKE_INPUTS")"
+          matrix="$(jq -cn --argjson packages "$packages" --argjson inputs "$inputs" \
+            '{include: ([$packages[] | {type: "package", name: .}] + [$inputs[] | {type: "input", name: .}])}')"
+
+          printf 'matrix=%s\n' "$matrix" >> "$GITHUB_OUTPUT"
+          if [[ "$(jq '.include | length' <<< "$matrix")" -gt 0 ]]; then
+            printf 'has-updates=true\n' >> "$GITHUB_OUTPUT"
+          else
+            printf 'has-updates=false\n' >> "$GITHUB_OUTPUT"
+          fi
+
+  update:
+    needs: discover
+    if: needs.discover.outputs.has-updates == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.discover.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - uses: cachix/install-nix-action@a49548c11d9846ad46ecc0115273879b045f001c # v31
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: cachix/cachix-action@5f2d7c5294214f71b873db4b969586b980625e71 # v17
+        with:
+          name: ydog-1-nur
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+
+      - name: Update package
+        if: matrix.type == 'package'
+        run: nix run nixpkgs#nix-update -- --flake "${{ matrix.name }}"
+
+      - name: Update flake input
+        if: matrix.type == 'input'
+        run: nix flake update "${{ matrix.name }}"
+
+      - name: Build package
+        if: matrix.type == 'package'
+        run: nix build ".#${{ matrix.name }}"
+
+      - name: Check flake
+        if: matrix.type == 'input'
+        run: nix flake check
+
+      - uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          commit-message: "update ${{ matrix.type }} ${{ matrix.name }}"
+          title: "update ${{ matrix.type }} ${{ matrix.name }}"
+          body: "Automated update of ${{ matrix.type }} `${{ matrix.name }}`."
+          branch: "update/${{ matrix.type }}-${{ matrix.name }}"
+          delete-branch: true
