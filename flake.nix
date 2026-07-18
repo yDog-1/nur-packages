@@ -33,10 +33,16 @@
   in {
     overlays.default = final: _prev: {
       ai-usagebar = final.callPackage ./pkgs/ai-usagebar {};
+      editprompt = final.callPackage ./pkgs/editprompt {
+        bun2nix = bun2nix.packages.${final.stdenv.hostPlatform.system}.default;
+      };
     };
 
     packages = forAllSystems (pkgs: {
       ai-usagebar = pkgs.callPackage ./pkgs/ai-usagebar {};
+      editprompt = pkgs.callPackage ./pkgs/editprompt {
+        bun2nix = bun2nix.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      };
     });
 
     formatter = forAllSystems (pkgs:
@@ -70,6 +76,9 @@
 
     checks = forAllSystems (pkgs: {
       ai-usagebar = pkgs.callPackage ./pkgs/ai-usagebar {};
+      editprompt = pkgs.callPackage ./pkgs/editprompt {
+        bun2nix = bun2nix.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      };
 
       format = pkgs.runCommand "check-format" {nativeBuildInputs = [pkgs.alejandra];} ''
         alejandra --check ${./.}

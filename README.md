@@ -5,6 +5,10 @@ Personal NUR packages for tools that are not available in nixpkgs yet.
 ## Packages
 
 - `ai-usagebar`
+- `editprompt`
+
+The repository is flake-only. Use packages by name, for example
+`ydog-nur.packages.${system}.editprompt`.
 
 ## Flake Usage
 
@@ -13,8 +17,8 @@ Personal NUR packages for tools that are not available in nixpkgs yet.
   inputs.ydog-nur.url = "github:yDog-1/nur-packages";
 
   outputs = {nixpkgs, ydog-nur, ...}: {
-    # Use ydog-nur.packages.${system}.ai-usagebar directly,
-    # or add ydog-nur.overlays.default to nixpkgs overlays.
+    # Use a named package directly, or add ydog-nur.overlays.default
+    # to nixpkgs overlays.
   };
 }
 ```
@@ -45,17 +49,6 @@ regenerates every opted-in package from its committed `lockFile` in one pull
 request. Development and CI update tools are flake-pinned and invoked with
 `nix develop --command`. `nix flake check --all-systems --no-build` evaluates
 all configured systems without claiming that their packages were built.
-
-## NUR Usage
-
-```nix
-{pkgs ? import <nixpkgs> {}}:
-
-let
-  ydog = import ./default.nix {inherit pkgs;};
-in
-  ydog.ai-usagebar
-```
 
 ## Binary Cache
 
