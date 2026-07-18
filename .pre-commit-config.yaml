@@ -18,3 +18,4 @@ repos:
         entry: statix check
         language: system
         types: [nix]
+        pass_filenames: false
