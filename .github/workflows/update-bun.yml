@@ -1,0 +1,83 @@
+name: Update Bun packages
+
+on:
+  workflow_call:
+    inputs:
+      package:
+        description: Flake package exposing passthru.bun2nixUpdate
+        required: true
+        type: string
+    secrets:
+      CACHIX_AUTH_TOKEN:
+        required: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+
+      - uses: cachix/install-nix-action@a49548c11d9846ad46ecc0115273879b045f001c # v31
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: cachix/cachix-action@5f2d7c5294214f71b873db4b969586b980625e71 # v17
+        with:
+          name: ydog-1-nur
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+
+      - name: Update package source
+        env:
+          PACKAGE: ${{ inputs.package }}
+        run: nix develop --command nix-update --flake --src-only "$PACKAGE"
+
+      - name: Regenerate Bun dependencies
+        shell: bash
+        env:
+          PACKAGE: ${{ inputs.package }}
+        run: |
+          set -euo pipefail
+
+          config="$(nix eval --json ".#$PACKAGE.bun2nixUpdate")"
+          source_root="$(jq -er '.sourceRoot | select(type == "string" and length > 0)' <<< "$config")"
+          source_lock_file="$(jq -er '.sourceLockFile | select(type == "string" and length > 0)' <<< "$config")"
+          lock_file="$(jq -er '.lockFile | select(type == "string" and length > 0)' <<< "$config")"
+          nix_file="$(jq -er '.nixFile | select(type == "string" and length > 0)' <<< "$config")"
+          source="$(nix build --no-link --print-out-paths ".#$PACKAGE.src")"
+
+          for path in "$source_root" "$source_lock_file" "$lock_file" "$nix_file"; do
+            if [[ "$path" == /* || "$path" == *//* || "/$path/" == */../* ]]; then
+              echo "Invalid relative path in bun2nixUpdate: $path" >&2
+              exit 1
+            fi
+          done
+
+          source_dir="$source/$source_root"
+          test -f "$source_dir/package.json"
+          test -f "$source_dir/$source_lock_file"
+
+          temp_dir="$(mktemp -d)"
+          trap 'rm -rf "$temp_dir"' EXIT
+          cp -R --no-preserve=mode "$source_dir/." "$temp_dir"
+          nix develop --command bun install --cwd "$temp_dir" --frozen-lockfile --ignore-scripts --no-progress
+
+          install -Dm644 "$source_dir/$source_lock_file" "$lock_file"
+          nix develop --command bun2nix -l "$lock_file" -o "$nix_file"
+          nix develop --command deadnix --edit "$nix_file"
+          nix fmt "$nix_file"
+
+      - name: Build package
+        env:
+          PACKAGE: ${{ inputs.package }}
+        run: nix build ".#$PACKAGE" --print-build-logs
+
+      - name: Check flake
+        run: nix flake check
+
+      - uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8
+        with:
+          commit-message: "update bun package ${{ inputs.package }}"
+          title: "update bun package ${{ inputs.package }}"
+          body: "Automated update of Bun package `${{ inputs.package }}` and its generated dependency files."
+          branch: "update/bun-${{ inputs.package }}"
+          delete-branch: true

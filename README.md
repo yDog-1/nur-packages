@@ -19,6 +19,44 @@ Personal NUR packages for tools that are not available in nixpkgs yet.
 }
 ```
 
+## Bun Package Updates
+
+Bun packages opt in to the shared update workflow with
+`passthru.bun2nixUpdate`:
+
+```nix
+passthru.bun2nixUpdate = {
+  sourceRoot = ".";
+  sourceLockFile = "bun.lock";
+  lockFile = "pkgs/example/bun.lock";
+  nixFile = "pkgs/example/bun.nix";
+};
+```
+
+All four values must be non-empty relative paths. `sourceRoot = "."` is
+permitted. Absolute paths, `..` path components, and repeated `//` are
+rejected. `sourceRoot` and `sourceLockFile` are relative to the fetched
+upstream source and must identify its `package.json` and lockfile.
+`lockFile` and `nixFile` are relative to this repository.
+
+Source updates validate the upstream lockfile with Bun, then regenerate
+`bun.nix` with the flake-pinned Bun tooling. Updating the `bun2nix` flake input
+regenerates every opted-in package from its committed `lockFile` in one pull
+request. Development and CI update tools are flake-pinned and invoked with
+`nix develop --command`. `nix flake check --all-systems --no-build` evaluates
+all configured systems without claiming that their packages were built.
+
+## NUR Usage
+
+```nix
+{pkgs ? import <nixpkgs> {}}:
+
+let
+  ydog = import ./default.nix {inherit pkgs;};
+in
+  ydog.ai-usagebar
+```
+
 ## Binary Cache
 
 Build results are available from Cachix:
@@ -38,15 +76,4 @@ To configure the cache manually, add this to your flake:
     extra-trusted-public-keys = ["ydog-1-nur.cachix.org-1:gw4tWFtMdLnDn2k1EMrkgUrheq8/zi8mjPQKto5PyDs="];
   };
 }
-```
-
-## NUR Usage
-
-```nix
-{pkgs ? import <nixpkgs> {}}:
-
-let
-  ydog = import ./default.nix {inherit pkgs;};
-in
-  ydog.ai-usagebar
 ```

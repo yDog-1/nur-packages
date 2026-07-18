@@ -23,6 +23,8 @@ jobs:
     outputs:
       matrix: ${{ steps.matrix.outputs.matrix }}
       has-updates: ${{ steps.matrix.outputs.has-updates }}
+      bun-packages: ${{ steps.matrix.outputs.bun-packages }}
+      bun2nix-selected: ${{ steps.matrix.outputs.bun2nix-selected }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
@@ -39,6 +41,10 @@ jobs:
           # shellcheck disable=SC2016 # This is a Nix expression, not shell expansion.
           available_packages="$(nix eval --json .#packages.x86_64-linux --apply \
             'packages: builtins.filter (name: name != "default" && packages.${name} ? version) (builtins.attrNames packages)')"
+          # Bun packages opt in by exposing the paths needed by update-bun.yml.
+          # shellcheck disable=SC2016 # This is a Nix expression, not shell expansion.
+          available_bun_packages="$(nix eval --json .#packages.x86_64-linux --apply \
+            'packages: builtins.filter (name: packages.${name} ? bun2nixUpdate) (builtins.attrNames packages)')"
           available_inputs="$(jq -c '.nodes.root.inputs | keys' flake.lock)"
 
           select_names() {
@@ -48,21 +54,38 @@ jobs:
               printf '%s' "$available"
             else
               jq -cn --argjson available "$available" --arg requested "$requested" \
-                '$requested | split(" ") | map(select(length > 0)) | map(select(. as $name | $available | index($name)))'
+                '$requested | split(" ") | map(select(length > 0)) as $selected
+                 | if ($selected | length) != ($selected | unique | length) then
+                     error("Requested names must not contain duplicates")
+                   elif any($selected[]; . as $name | $available | index($name) | not) then
+                     error("Requested name is not available")
+                   else
+                     $selected
+                   end'
             fi
           }
 
           packages="$(select_names "$available_packages" "$PACKAGES")"
+          bun_packages="$(jq -cn --argjson packages "$packages" --argjson bun "$available_bun_packages" \
+            '[$packages[] | select(. as $name | $bun | index($name))]')"
+          packages="$(jq -cn --argjson packages "$packages" --argjson bun "$available_bun_packages" \
+            '[$packages[] | select(. as $name | $bun | index($name) | not)]')"
           inputs="$(select_names "$available_inputs" "$FLAKE_INPUTS")"
+          bun2nix_selected="$(jq -r 'index("bun2nix") != null' <<< "$inputs")"
+          inputs="$(jq -cn --argjson inputs "$inputs" '$inputs | [.[] | select(. != "bun2nix")]')"
           matrix="$(jq -cn --argjson packages "$packages" --argjson inputs "$inputs" \
             '{include: ([$packages[] | {type: "package", name: .}] + [$inputs[] | {type: "input", name: .}])}')"
 
-          printf 'matrix=%s\n' "$matrix" >> "$GITHUB_OUTPUT"
-          if [[ "$(jq '.include | length' <<< "$matrix")" -gt 0 ]]; then
-            printf 'has-updates=true\n' >> "$GITHUB_OUTPUT"
-          else
-            printf 'has-updates=false\n' >> "$GITHUB_OUTPUT"
-          fi
+          {
+            printf 'matrix=%s\n' "$matrix"
+            printf 'bun-packages=%s\n' "$bun_packages"
+            printf 'bun2nix-selected=%s\n' "$bun2nix_selected"
+            if [[ "$(jq '.include | length' <<< "$matrix")" -gt 0 ]]; then
+              printf 'has-updates=true\n'
+            else
+              printf 'has-updates=false\n'
+            fi
+          } >> "$GITHUB_OUTPUT"
 
   update:
     needs: discover
@@ -85,18 +108,23 @@ jobs:
 
       - name: Update package
         if: matrix.type == 'package'
-        run: nix run nixpkgs#nix-update -- --flake "${{ matrix.name }}"
+        env:
+          PACKAGE: ${{ matrix.name }}
+        run: nix develop --command nix-update --flake "$PACKAGE"
 
       - name: Update flake input
         if: matrix.type == 'input'
-        run: nix flake update "${{ matrix.name }}"
+        env:
+          FLAKE_INPUT: ${{ matrix.name }}
+        run: nix flake update "$FLAKE_INPUT"
 
       - name: Build package
         if: matrix.type == 'package'
-        run: nix build ".#${{ matrix.name }}"
+        env:
+          PACKAGE: ${{ matrix.name }}
+        run: nix build ".#$PACKAGE"
 
       - name: Check flake
-        if: matrix.type == 'input'
         run: nix flake check
 
       - uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
@@ -106,3 +134,27 @@ jobs:
           body: "Automated update of ${{ matrix.type }} `${{ matrix.name }}`."
           branch: "update/${{ matrix.type }}-${{ matrix.name }}"
           delete-branch: true
+
+  update-bun2nix:
+    needs: discover
+    if: needs.discover.outputs.bun2nix-selected == 'true'
+    uses: ./.github/workflows/update-bun2nix.yml
+    secrets: inherit
+    permissions:
+      contents: write
+      pull-requests: write
+
+  update-bun:
+    needs: discover
+    if: needs.discover.outputs.bun-packages != '[]'
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ${{ fromJSON(needs.discover.outputs.bun-packages) }}
+    uses: ./.github/workflows/update-bun.yml
+    with:
+      package: ${{ matrix.package }}
+    secrets: inherit
+    permissions:
+      contents: write
+      pull-requests: write

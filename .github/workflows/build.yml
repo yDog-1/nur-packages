@@ -25,5 +25,15 @@ jobs:
       - name: Check flake
         run: nix flake check
 
-      - name: Build ai-usagebar
-        run: nix build .#ai-usagebar
+      - name: Build packages
+        shell: bash
+        run: |
+          mapfile -t packages < <(
+            nix eval --json .#packages.x86_64-linux --apply 'builtins.attrNames' |
+              jq -r '.[] | ".#\(.)"'
+          )
+          if [[ "${#packages[@]}" -eq 0 ]]; then
+            echo "No packages were discovered to build." >&2
+            exit 1
+          fi
+          nix build "${packages[@]}"

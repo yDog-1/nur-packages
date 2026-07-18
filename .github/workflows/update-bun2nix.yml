@@ -1,0 +1,68 @@
+name: Update bun2nix
+
+on:
+  workflow_call:
+    secrets:
+      CACHIX_AUTH_TOKEN:
+        required: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+
+      - uses: cachix/install-nix-action@a49548c11d9846ad46ecc0115273879b045f001c # v31
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: cachix/cachix-action@5f2d7c5294214f71b873db4b969586b980625e71 # v17
+        with:
+          name: ydog-1-nur
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+
+      - name: Update bun2nix and regenerate dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          nix flake lock --update-input bun2nix
+          # shellcheck disable=SC2016 # This is a Nix expression, not shell expansion.
+          packages="$(nix eval --json .#packages.x86_64-linux --apply \
+            'packages: builtins.filter (name: packages.${name} ? bun2nixUpdate) (builtins.attrNames packages)')"
+          mapfile -t package_names < <(jq -r '.[]' <<< "$packages")
+          if [[ "${#package_names[@]}" -eq 0 ]]; then
+            echo "No Bun packages were discovered to regenerate." >&2
+            exit 1
+          fi
+
+          for package in "${package_names[@]}"; do
+            config="$(nix eval --json ".#$package.bun2nixUpdate")"
+            source_root="$(jq -er '.sourceRoot | select(type == "string" and length > 0)' <<< "$config")"
+            source_lock_file="$(jq -er '.sourceLockFile | select(type == "string" and length > 0)' <<< "$config")"
+            lock_file="$(jq -er '.lockFile | select(type == "string" and length > 0)' <<< "$config")"
+            nix_file="$(jq -er '.nixFile | select(type == "string" and length > 0)' <<< "$config")"
+
+            for path in "$source_root" "$source_lock_file" "$lock_file" "$nix_file"; do
+              if [[ "$path" == /* || "$path" == *//* || "/$path/" == */../* ]]; then
+                echo "Invalid relative path in bun2nixUpdate: $path" >&2
+                exit 1
+              fi
+            done
+
+            test -f "$lock_file"
+            nix develop --command bun2nix -l "$lock_file" -o "$nix_file"
+            nix develop --command deadnix --edit "$nix_file"
+            nix fmt "$nix_file"
+          done
+
+          nix build "${package_names[@]/#/.#}" --print-build-logs
+          nix flake check
+
+      - uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8
+        with:
+          commit-message: "update bun2nix"
+          title: "update bun2nix"
+          body: "Automated bun2nix input update and regeneration of all Bun package dependency files."
+          branch: "update/bun2nix"
+          delete-branch: true

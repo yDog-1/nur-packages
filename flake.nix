@@ -2,13 +2,27 @@
   description = "Personal NUR packages";
 
   nixConfig = {
-    extra-substituters = ["https://ydog-1-nur.cachix.org"];
-    extra-trusted-public-keys = ["ydog-1-nur.cachix.org-1:gw4tWFtMdLnDn2k1EMrkgUrheq8/zi8mjPQKto5PyDs="];
+    extra-substituters = [
+      "https://ydog-1-nur.cachix.org"
+      "https://nix-community.cachix.org"
+    ];
+    extra-trusted-public-keys = [
+      "ydog-1-nur.cachix.org-1:gw4tWFtMdLnDn2k1EMrkgUrheq8/zi8mjPQKto5PyDs="
+      "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+    ];
   };
 
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    bun2nix.url = "github:nix-community/bun2nix";
+    bun2nix.inputs.nixpkgs.follows = "nixpkgs";
+  };
 
-  outputs = {nixpkgs, ...}: let
+  outputs = {
+    bun2nix,
+    nixpkgs,
+    ...
+  }: let
     systems = [
       "x86_64-linux"
       "aarch64-linux"
@@ -21,9 +35,8 @@
       ai-usagebar = final.callPackage ./pkgs/ai-usagebar {};
     };
 
-    packages = forAllSystems (pkgs: rec {
+    packages = forAllSystems (pkgs: {
       ai-usagebar = pkgs.callPackage ./pkgs/ai-usagebar {};
-      default = ai-usagebar;
     });
 
     formatter = forAllSystems (pkgs:
@@ -43,16 +56,20 @@
       default = pkgs.mkShell {
         packages = with pkgs; [
           alejandra
+          bun
+          bun2nix.packages.${pkgs.stdenv.hostPlatform.system}.default
           deadnix
           nil
+          nix-update
           pre-commit
           statix
+          actionlint
         ];
       };
     });
 
     checks = forAllSystems (pkgs: {
-      inherit (pkgs.callPackage ./default.nix {}) ai-usagebar;
+      ai-usagebar = pkgs.callPackage ./pkgs/ai-usagebar {};
 
       format = pkgs.runCommand "check-format" {nativeBuildInputs = [pkgs.alejandra];} ''
         alejandra --check ${./.}
