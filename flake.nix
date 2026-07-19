@@ -36,6 +36,7 @@
       editprompt = final.callPackage ./pkgs/editprompt {
         bun2nix = bun2nix.packages.${final.stdenv.hostPlatform.system}.default;
       };
+      vde-tmux = final.callPackage ./pkgs/vde-tmux {};
     };
 
     packages = forAllSystems (pkgs: {
@@ -43,6 +44,7 @@
       editprompt = pkgs.callPackage ./pkgs/editprompt {
         bun2nix = bun2nix.packages.${pkgs.stdenv.hostPlatform.system}.default;
       };
+      vde-tmux = pkgs.callPackage ./pkgs/vde-tmux {};
     });
 
     formatter = forAllSystems (pkgs:
@@ -79,6 +81,7 @@
       editprompt = pkgs.callPackage ./pkgs/editprompt {
         bun2nix = bun2nix.packages.${pkgs.stdenv.hostPlatform.system}.default;
       };
+      vde-tmux = pkgs.callPackage ./pkgs/vde-tmux {};
 
       format = pkgs.runCommand "check-format" {nativeBuildInputs = [pkgs.alejandra];} ''
         alejandra --check ${./.}
