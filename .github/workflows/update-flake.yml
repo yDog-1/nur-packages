@@ -19,6 +19,8 @@ on:
 
 jobs:
   discover:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.matrix.outputs.matrix }}
@@ -90,6 +92,9 @@ jobs:
   update:
     needs: discover
     if: needs.discover.outputs.has-updates == 'true'
+    permissions:
+      contents: write
+      pull-requests: write
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -134,6 +139,7 @@ jobs:
           body: "Automated update of ${{ matrix.type }} `${{ matrix.name }}`."
           branch: "update/${{ matrix.type }}-${{ matrix.name }}"
           delete-branch: true
+          auto-merge: true
 
   update-bun2nix:
     needs: discover
