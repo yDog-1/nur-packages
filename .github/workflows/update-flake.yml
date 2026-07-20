@@ -132,14 +132,21 @@ jobs:
       - name: Check flake
         run: nix flake check
 
-      - uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+      - id: create-pull-request
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
           commit-message: "update ${{ matrix.type }} ${{ matrix.name }}"
           title: "update ${{ matrix.type }} ${{ matrix.name }}"
           body: "Automated update of ${{ matrix.type }} `${{ matrix.name }}`."
           branch: "update/${{ matrix.type }}-${{ matrix.name }}"
           delete-branch: true
-          auto-merge: true
+
+      - name: Enable auto-merge
+        if: steps.create-pull-request.outputs.pull-request-url != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ steps.create-pull-request.outputs.pull-request-url }}
+        run: gh pr merge --auto --squash "$PR_URL"
 
   update-bun2nix:
     needs: discover
