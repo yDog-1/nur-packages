@@ -5,14 +5,14 @@
 }:
 rustPlatform.buildRustPackage rec {
   pname = "ai-usagebar";
-  version = "0.13.0";
+  version = "0.17.2";
 
   src = fetchCrate {
     inherit pname version;
-    hash = "sha256-OC24X7kzTVbllyJMSjF9tZJhy2nzFsA6qo/I6tQpl1M=";
+    hash = "sha256-pJJ7FM3f7Evl2XWRcH+TyvU4a4uCYk4hbLJKlOYXESE=";
   };
 
-  cargoHash = "sha256-bZ6ZBul/BGzLWj8GouJj+OmXBNDPjq5v9T/snwbL4NA=";
+  cargoHash = "sha256-cTJyq0q8Ekt2j7jcmUnb7F6Si6SpbFlzWqeF31vaciA=";
 
   meta = {
     description = "Waybar widget and TUI for AI plan usage";
