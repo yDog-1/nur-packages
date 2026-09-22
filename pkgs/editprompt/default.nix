@@ -29,11 +29,14 @@ bun2nix.mkDerivation (finalAttrs: {
     runHook postInstallCheck
   '';
 
-  passthru.bun2nixUpdate = {
-    sourceRoot = ".";
-    sourceLockFile = "bun.lock";
-    lockFile = "pkgs/editprompt/bun.lock";
-    nixFile = "pkgs/editprompt/bun.nix";
+  passthru = {
+    updateFile = "pkgs/editprompt/default.nix";
+    bun2nixUpdate = {
+      sourceRoot = ".";
+      sourceLockFile = "bun.lock";
+      lockFile = "pkgs/editprompt/bun.lock";
+      nixFile = "pkgs/editprompt/bun.nix";
+    };
   };
 
   meta = {

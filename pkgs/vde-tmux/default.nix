@@ -30,6 +30,8 @@ rustPlatform.buildRustPackage rec {
     wrapProgram $out/bin/vde-tmux --prefix PATH : ${lib.makeBinPath [tmux git lsof less]}
   '';
 
+  passthru.updateFile = "pkgs/vde-tmux/default.nix";
+
   meta = {
     description = "Show AI coding agent state in the tmux status line and sidebar";
     homepage = "https://github.com/yuki-yano/vde-tmux";
