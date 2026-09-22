@@ -67,7 +67,7 @@ updates use the same ordinary pull-request CI as every other pull request.
 The update workflow MUST create an installation token with
 `actions/create-github-app-token` from:
 
-- repository variable `CI_APP_ID`;
+- repository variable `CI_APP_CLIENT_ID`;
 - repository secret `CI_APP_PRIVATE_KEY`.
 
 The App MUST be installed only where needed and have no more than:
