@@ -73,11 +73,11 @@ normally. GitHub native auto-merge squash-merges the update only after strict
 branch protection accepts the required `build` check.
 
 Configure the App with Contents and Pull requests read/write permissions and
-Metadata read permission. Store its ID in the `CI_APP_ID` repository variable
-and its private key in the `CI_APP_PRIVATE_KEY` repository secret. The token is
-created only after update generation and is used only for pull-request creation
-and enabling auto-merge; Nix update commands and pull-request builds do not
-receive it.
+Metadata read permission. Store its client ID in the `CI_APP_CLIENT_ID`
+repository variable and its private key in the `CI_APP_PRIVATE_KEY` repository
+secret. The token is created only after update generation and is used only for
+pull-request creation and enabling auto-merge; Nix update commands and
+pull-request builds do not receive it.
 
 Pull requests use read-only repository and Cachix access. Only trusted pushes
 to `main` require `CACHIX_AUTH_TOKEN` and push build results. The repository
