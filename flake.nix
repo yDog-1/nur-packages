@@ -14,11 +14,14 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    ai-usagebar.url = "github:akitaonrails/ai-usagebar";
+    ai-usagebar.inputs.nixpkgs.follows = "nixpkgs";
     bun2nix.url = "github:nix-community/bun2nix";
     bun2nix.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = {
+    ai-usagebar,
     bun2nix,
     nixpkgs,
     ...
@@ -32,7 +35,7 @@
         f (import nixpkgs {inherit system;}));
   in {
     overlays.default = final: _prev: {
-      ai-usagebar = final.callPackage ./pkgs/ai-usagebar {};
+      ai-usagebar = ai-usagebar.packages.${final.stdenv.hostPlatform.system}.default;
       editprompt = final.callPackage ./pkgs/editprompt {
         bun2nix = bun2nix.packages.${final.stdenv.hostPlatform.system}.default;
       };
@@ -40,7 +43,7 @@
     };
 
     packages = forAllSystems (pkgs: {
-      ai-usagebar = pkgs.callPackage ./pkgs/ai-usagebar {};
+      ai-usagebar = ai-usagebar.packages.${pkgs.stdenv.hostPlatform.system}.default;
       editprompt = pkgs.callPackage ./pkgs/editprompt {
         bun2nix = bun2nix.packages.${pkgs.stdenv.hostPlatform.system}.default;
       };
@@ -78,7 +81,7 @@
     });
 
     checks = forAllSystems (pkgs: {
-      ai-usagebar = pkgs.callPackage ./pkgs/ai-usagebar {};
+      ai-usagebar = ai-usagebar.packages.${pkgs.stdenv.hostPlatform.system}.default;
       editprompt = pkgs.callPackage ./pkgs/editprompt {
         bun2nix = bun2nix.packages.${pkgs.stdenv.hostPlatform.system}.default;
       };
