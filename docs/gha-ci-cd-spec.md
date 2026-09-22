@@ -2,7 +2,7 @@
 
 ## Status
 
-- Target branch: `fix/gha-ci-cd`
+- Target branch: `main`
 - Authentication: use a repository-scoped GitHub App for update pull requests
 - Update granularity: one aggregate dependency-update pull request
 - Cache policy: pull requests are read-only; only pushes to `main` push to Cachix
