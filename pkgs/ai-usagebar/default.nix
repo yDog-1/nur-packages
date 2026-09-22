@@ -5,14 +5,14 @@
 }:
 rustPlatform.buildRustPackage rec {
   pname = "ai-usagebar";
-  version = "0.17.2";
+  version = "1.21.1";
 
   src = fetchCrate {
     inherit pname version;
-    hash = "sha256-pJJ7FM3f7Evl2XWRcH+TyvU4a4uCYk4hbLJKlOYXESE=";
+    hash = "sha256-zhQ0dTy7ta0Vva9Y2njxxcEoeYlyUyLKHDtHTHCiggQ=";
   };
 
-  cargoHash = "sha256-cTJyq0q8Ekt2j7jcmUnb7F6Si6SpbFlzWqeF31vaciA=";
+  cargoHash = "sha256-BD7Sp/Eb3FVsEe60/Z5jhvVLGxMKvAy03BqZCdjT4Fo=";
 
   passthru.updateFile = "pkgs/ai-usagebar/default.nix";
 
