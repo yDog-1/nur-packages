@@ -70,6 +70,7 @@
           nil
           nix-update
           pre-commit
+          shellcheck
           statix
           actionlint
         ];
@@ -95,6 +96,16 @@
 
       statix = pkgs.runCommand "check-statix" {nativeBuildInputs = [pkgs.statix];} ''
         statix check ${./.}
+        touch $out
+      '';
+
+      actionlint = pkgs.runCommand "check-actionlint" {nativeBuildInputs = [pkgs.actionlint pkgs.shellcheck];} ''
+        actionlint ${./.}/.github/workflows/*.yml
+        touch $out
+      '';
+
+      shellcheck = pkgs.runCommand "check-shellcheck" {nativeBuildInputs = [pkgs.shellcheck];} ''
+        shellcheck ${./scripts}/*.sh
         touch $out
       '';
     });

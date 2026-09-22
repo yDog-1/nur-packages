@@ -14,6 +14,8 @@ rustPlatform.buildRustPackage rec {
 
   cargoHash = "sha256-cTJyq0q8Ekt2j7jcmUnb7F6Si6SpbFlzWqeF31vaciA=";
 
+  passthru.updateFile = "pkgs/ai-usagebar/default.nix";
+
   meta = {
     description = "Waybar widget and TUI for AI plan usage";
     homepage = "https://github.com/akitaonrails/ai-usagebar";

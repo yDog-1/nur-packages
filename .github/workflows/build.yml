@@ -3,37 +3,68 @@ name: Build and cache
 on:
   pull_request:
   push:
+    branches: [main]
 
 permissions:
   contents: read
 
+concurrency:
+  group: build-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 120
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Require cache write credential
+        if: github.event_name == 'push'
+        env:
+          CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        run: |
+          if [[ -z "$CACHIX_AUTH_TOKEN" ]]; then
+            echo "CACHIX_AUTH_TOKEN is required for main builds." >&2
+            exit 1
+          fi
 
-      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: false
 
-      - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
+      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
+        with:
+          github_access_token: ${{ github.token }}
+
+      - name: Configure read-only Cachix
+        if: github.event_name == 'pull_request'
+        uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17.1.0
+        with:
+          name: ydog-1-nur
+          skipPush: true
+
+      - name: Configure Cachix and push results
+        if: github.event_name == 'push'
+        uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17.1.0
         with:
           name: ydog-1-nur
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
 
+      - name: Evaluate all systems
+        run: nix flake check --all-systems --no-build --keep-going --print-build-logs --no-update-lock-file
+
       - name: Check flake
-        run: nix flake check
+        run: nix flake check --keep-going --print-build-logs --no-update-lock-file
 
       - name: Build packages
         shell: bash
         run: |
+          set -euo pipefail
           mapfile -t packages < <(
-            nix eval --json .#packages.x86_64-linux --apply 'builtins.attrNames' |
+            nix eval --json --no-update-lock-file .#packages.x86_64-linux --apply 'builtins.attrNames' |
               jq -r '.[] | ".#\(.)"'
           )
           if [[ "${#packages[@]}" -eq 0 ]]; then
             echo "No packages were discovered to build." >&2
             exit 1
           fi
-          nix build "${packages[@]}"
+          nix build --no-link --keep-going --print-build-logs --no-update-lock-file "${packages[@]}"
