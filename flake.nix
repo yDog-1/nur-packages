@@ -42,7 +42,7 @@
         };
         vde-tmux = final.callPackage ./pkgs/vde-tmux {};
       }
-      // nixpkgs.lib.optionalAttrs final.stdenv.hostPlatform.isx86_64 {
+      // nixpkgs.lib.optionalAttrs (final.stdenv.hostPlatform.system == "x86_64-linux") {
         modorganizer2-linux-installer = final.callPackage ./pkgs/modorganizer2-linux-installer {};
       };
 
@@ -54,7 +54,7 @@
         };
         vde-tmux = pkgs.callPackage ./pkgs/vde-tmux {};
       }
-      // nixpkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isx86_64 {
+      // nixpkgs.lib.optionalAttrs (pkgs.stdenv.hostPlatform.system == "x86_64-linux") {
         modorganizer2-linux-installer = pkgs.callPackage ./pkgs/modorganizer2-linux-installer {};
       });
 
@@ -121,7 +121,7 @@
           touch $out
         '';
       }
-      // nixpkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isx86_64 {
+      // nixpkgs.lib.optionalAttrs (pkgs.stdenv.hostPlatform.system == "x86_64-linux") {
         modorganizer2-linux-installer = pkgs.callPackage ./pkgs/modorganizer2-linux-installer {};
       });
   };
