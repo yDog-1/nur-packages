@@ -10,6 +10,7 @@
   procps,
   psmisc,
   xdg-utils,
+  zlib,
 }:
 stdenv.mkDerivation (finalAttrs: {
   pname = "modorganizer2-linux-installer";
@@ -26,6 +27,8 @@ stdenv.mkDerivation (finalAttrs: {
     autoPatchelfHook
     makeWrapper
   ];
+
+  buildInputs = [zlib];
 
   installPhase = ''
     runHook preInstall
