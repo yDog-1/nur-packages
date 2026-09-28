@@ -6,6 +6,7 @@ Personal NUR packages for tools that are not available in nixpkgs yet.
 
 - `ai-usagebar`
 - `editprompt`
+- `modorganizer2-linux-installer` (`mo2-lint`)
 - `vde-tmux`
 
 The repository is flake-only. Use packages by name, for example
