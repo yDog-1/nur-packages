@@ -34,21 +34,29 @@
       nixpkgs.lib.genAttrs systems (system:
         f (import nixpkgs {inherit system;}));
   in {
-    overlays.default = final: _prev: {
-      ai-usagebar = ai-usagebar.packages.${final.stdenv.hostPlatform.system}.default;
-      editprompt = final.callPackage ./pkgs/editprompt {
-        bun2nix = bun2nix.packages.${final.stdenv.hostPlatform.system}.default;
+    overlays.default = final: _prev:
+      {
+        ai-usagebar = ai-usagebar.packages.${final.stdenv.hostPlatform.system}.default;
+        editprompt = final.callPackage ./pkgs/editprompt {
+          bun2nix = bun2nix.packages.${final.stdenv.hostPlatform.system}.default;
+        };
+        vde-tmux = final.callPackage ./pkgs/vde-tmux {};
+      }
+      // nixpkgs.lib.optionalAttrs (final.stdenv.hostPlatform.system == "x86_64-linux") {
+        modorganizer2-linux-installer = final.callPackage ./pkgs/modorganizer2-linux-installer {};
       };
-      vde-tmux = final.callPackage ./pkgs/vde-tmux {};
-    };
 
-    packages = forAllSystems (pkgs: {
-      ai-usagebar = ai-usagebar.packages.${pkgs.stdenv.hostPlatform.system}.default;
-      editprompt = pkgs.callPackage ./pkgs/editprompt {
-        bun2nix = bun2nix.packages.${pkgs.stdenv.hostPlatform.system}.default;
-      };
-      vde-tmux = pkgs.callPackage ./pkgs/vde-tmux {};
-    });
+    packages = forAllSystems (pkgs:
+      {
+        ai-usagebar = ai-usagebar.packages.${pkgs.stdenv.hostPlatform.system}.default;
+        editprompt = pkgs.callPackage ./pkgs/editprompt {
+          bun2nix = bun2nix.packages.${pkgs.stdenv.hostPlatform.system}.default;
+        };
+        vde-tmux = pkgs.callPackage ./pkgs/vde-tmux {};
+      }
+      // nixpkgs.lib.optionalAttrs (pkgs.stdenv.hostPlatform.system == "x86_64-linux") {
+        modorganizer2-linux-installer = pkgs.callPackage ./pkgs/modorganizer2-linux-installer {};
+      });
 
     formatter = forAllSystems (pkgs:
       pkgs.writeShellApplication {
@@ -80,37 +88,41 @@
       };
     });
 
-    checks = forAllSystems (pkgs: {
-      ai-usagebar = ai-usagebar.packages.${pkgs.stdenv.hostPlatform.system}.default;
-      editprompt = pkgs.callPackage ./pkgs/editprompt {
-        bun2nix = bun2nix.packages.${pkgs.stdenv.hostPlatform.system}.default;
-      };
-      vde-tmux = pkgs.callPackage ./pkgs/vde-tmux {};
+    checks = forAllSystems (pkgs:
+      {
+        ai-usagebar = ai-usagebar.packages.${pkgs.stdenv.hostPlatform.system}.default;
+        editprompt = pkgs.callPackage ./pkgs/editprompt {
+          bun2nix = bun2nix.packages.${pkgs.stdenv.hostPlatform.system}.default;
+        };
+        vde-tmux = pkgs.callPackage ./pkgs/vde-tmux {};
 
-      format = pkgs.runCommand "check-format" {nativeBuildInputs = [pkgs.alejandra];} ''
-        alejandra --check ${./.}
-        touch $out
-      '';
+        format = pkgs.runCommand "check-format" {nativeBuildInputs = [pkgs.alejandra];} ''
+          alejandra --check ${./.}
+          touch $out
+        '';
 
-      deadnix = pkgs.runCommand "check-deadnix" {nativeBuildInputs = [pkgs.deadnix];} ''
-        deadnix --fail ${./.}
-        touch $out
-      '';
+        deadnix = pkgs.runCommand "check-deadnix" {nativeBuildInputs = [pkgs.deadnix];} ''
+          deadnix --fail ${./.}
+          touch $out
+        '';
 
-      statix = pkgs.runCommand "check-statix" {nativeBuildInputs = [pkgs.statix];} ''
-        statix check ${./.}
-        touch $out
-      '';
+        statix = pkgs.runCommand "check-statix" {nativeBuildInputs = [pkgs.statix];} ''
+          statix check ${./.}
+          touch $out
+        '';
 
-      actionlint = pkgs.runCommand "check-actionlint" {nativeBuildInputs = [pkgs.actionlint pkgs.shellcheck];} ''
-        actionlint ${./.}/.github/workflows/*.yml
-        touch $out
-      '';
+        actionlint = pkgs.runCommand "check-actionlint" {nativeBuildInputs = [pkgs.actionlint pkgs.shellcheck];} ''
+          actionlint ${./.}/.github/workflows/*.yml
+          touch $out
+        '';
 
-      shellcheck = pkgs.runCommand "check-shellcheck" {nativeBuildInputs = [pkgs.shellcheck];} ''
-        shellcheck ${./scripts}/*.sh
-        touch $out
-      '';
-    });
+        shellcheck = pkgs.runCommand "check-shellcheck" {nativeBuildInputs = [pkgs.shellcheck];} ''
+          shellcheck ${./scripts}/*.sh
+          touch $out
+        '';
+      }
+      // nixpkgs.lib.optionalAttrs (pkgs.stdenv.hostPlatform.system == "x86_64-linux") {
+        modorganizer2-linux-installer = pkgs.callPackage ./pkgs/modorganizer2-linux-installer {};
+      });
   };
 }
