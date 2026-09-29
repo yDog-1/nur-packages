@@ -52,6 +52,25 @@ jobs:
       - name: Evaluate all systems
         run: nix flake check --all-systems --no-build --keep-going --print-build-logs --no-update-lock-file
 
+      - name: Evaluate overlay packages
+        run: |
+          # shellcheck disable=SC2016 # Nix interpolation is intentional.
+          nix eval --impure --json --expr '
+            let
+              flake = builtins.getFlake (toString ./.);
+              pkgs = import flake.inputs.nixpkgs {
+                system = "x86_64-linux";
+                overlays = [ flake.overlays.default ];
+              };
+            in
+              builtins.map (name: pkgs.${name}.drvPath) [
+                "ai-usagebar"
+                "editprompt"
+                "vde-tmux"
+                "modorganizer2-linux-installer"
+              ]
+          '
+
       - name: Check flake
         run: nix flake check --keep-going --print-build-logs --no-update-lock-file
 
