@@ -58,17 +58,14 @@ jobs:
           nix eval --impure --json --expr '
             let
               flake = builtins.getFlake (toString ./.);
-              pkgs = import flake.inputs.nixpkgs {
+              base = import flake.inputs.nixpkgs {
                 system = "x86_64-linux";
-                overlays = [ flake.overlays.default ];
               };
+              pkgs = base.extend flake.overlays.default;
+              names = builtins.attrNames (flake.overlays.default pkgs base);
             in
-              builtins.map (name: pkgs.${name}.drvPath) [
-                "ai-usagebar"
-                "editprompt"
-                "vde-tmux"
-                "modorganizer2-linux-installer"
-              ]
+              assert names != [];
+              builtins.map (name: pkgs.${name}.drvPath) names
           '
 
       - name: Check flake
