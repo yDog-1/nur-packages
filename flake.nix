@@ -42,7 +42,7 @@
         };
         vde-tmux = final.callPackage ./pkgs/vde-tmux {};
       }
-      // nixpkgs.lib.optionalAttrs (final.stdenv.hostPlatform.system == "x86_64-linux") {
+      // nixpkgs.lib.optionalAttrs (_prev.stdenv.hostPlatform.system == "x86_64-linux") {
         modorganizer2-linux-installer = final.callPackage ./pkgs/modorganizer2-linux-installer {};
       };
 
