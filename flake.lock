@@ -7,11 +7,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1790793952,
-        "narHash": "sha256-jhgQt+hLjn9Rsbz7Y5BJPKCayChZwJzPg7TnTgqdq8c=",
+        "lastModified": 1790881586,
+        "narHash": "sha256-x8sa8CBO5sOTsrhhL6zcJq4Xy1D67MutJLF1YkzmhL8=",
         "owner": "akitaonrails",
         "repo": "ai-usagebar",
-        "rev": "9f7537bf4cd3be4a25e4029d2369f3f1ca1b0555",
+        "rev": "2d79886dd749ee6951f54b3c3d3acf63dffe1337",
         "type": "github"
       },
       "original": {
@@ -66,11 +66,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1790689126,
-        "narHash": "sha256-ilerN1WLSvF+HMjziC/Wv99J5y02maDH+6hZPwsORKg=",
+        "lastModified": 1790822859,
+        "narHash": "sha256-69xHQhAeMAD2wDXO7T2pcOZIF9Sga2W+JkmY2a11Ops=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "b4fd65b198c599cbe814fcb9f42d25d021595ec9",
+        "rev": "c59305bab2065cfecc4944690d9eedbb56f3a9fa",
         "type": "github"
       },
       "original": {
