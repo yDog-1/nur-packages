@@ -10,16 +10,16 @@
 }:
 rustPlatform.buildRustPackage rec {
   pname = "vde-tmux";
-  version = "0.3.7";
+  version = "0.3.8";
 
   src = fetchFromGitHub {
     owner = "yuki-yano";
     repo = "vde-tmux";
     tag = "v${version}";
-    hash = "sha256-ZDrKIRoUNUgorulxXHunqb68D4L3NWSU1xGB74+kjV8=";
+    hash = "sha256-1q5wlIRfINnNtVqeHhZXJBX6S47lvyigyYe7F+XRRTM=";
   };
 
-  cargoHash = "sha256-Tex1jINKLe8jrrZyi/xRuXyFBg/ZqnZmA18skH8xTaA=";
+  cargoHash = "sha256-GdX793vr9jOz9hOSqFSG5fvon6TCUDyq00pZbH/cPKc=";
 
   doCheck = false;
 
