@@ -2,6 +2,7 @@
   lib,
   bun2nix,
   fetchFromGitHub,
+  fetchpatch,
 }:
 bun2nix.mkDerivation (finalAttrs: {
   pname = "editprompt";
@@ -13,6 +14,14 @@ bun2nix.mkDerivation (finalAttrs: {
     tag = "v${finalAttrs.version}";
     hash = "sha256-5SPRvghiN0egkun0xOB1IwRWTlo2nctonOVBlK3PR98=";
   };
+
+  patches = [
+    # Remove once a release includes https://github.com/eetann/editprompt/pull/52.
+    (fetchpatch {
+      url = "https://github.com/eetann/editprompt/commit/f2b188bfbbcf83a118c9644a2156fd284aa569b2.patch";
+      hash = "sha256-B8ylTRCQrsJknMNKw9kD+ZnUk/fzkkoSJH0pW3g5Xyo=";
+    })
+  ];
 
   bunDeps = bun2nix.fetchBunDeps {
     bunNix = ./bun.nix;
