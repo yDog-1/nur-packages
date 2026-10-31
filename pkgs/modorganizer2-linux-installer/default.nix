@@ -14,11 +14,11 @@
 }:
 stdenv.mkDerivation (finalAttrs: {
   pname = "modorganizer2-linux-installer";
-  version = "7.0.4";
+  version = "7.0.5";
 
   src = fetchurl {
     url = "https://github.com/Furglitch/modorganizer2-linux-installer/releases/download/${finalAttrs.version}/mo2-lint";
-    hash = "sha256-QPYSqnwKbNqFq7xyJxTmv2Oj3FGGoPbflAaFPIbgmnY=";
+    hash = "sha256-lAvxE+gAd4wQp4Zs19fL+dEJxiGgcOeAWJEtET0LAGQ=";
   };
 
   dontUnpack = true;
