@@ -5,13 +5,13 @@
 }:
 bun2nix.mkDerivation (finalAttrs: {
   pname = "editprompt";
-  version = "1.7.0";
+  version = "1.8.1";
 
   src = fetchFromGitHub {
     owner = "eetann";
     repo = "editprompt";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-YFQtRIZv8InrCWYT0V/h6JWI13nzmjwbne8bY/AXdWE=";
+    hash = "sha256-mxjjIZHehezx4P1mHO/Rl35P1xL8eeeujk7LVBpEeA4=";
   };
 
   bunDeps = bun2nix.fetchBunDeps {
