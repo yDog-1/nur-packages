@@ -40,6 +40,7 @@
         editprompt = final.callPackage ./pkgs/editprompt {
           bun2nix = bun2nix.packages.${final.stdenv.hostPlatform.system}.default;
         };
+        ng = final.callPackage ./pkgs/ng {};
         vde-tmux = final.callPackage ./pkgs/vde-tmux {};
       }
       // nixpkgs.lib.optionalAttrs (_prev.stdenv.hostPlatform.system == "x86_64-linux") {
@@ -52,6 +53,7 @@
         editprompt = pkgs.callPackage ./pkgs/editprompt {
           bun2nix = bun2nix.packages.${pkgs.stdenv.hostPlatform.system}.default;
         };
+        ng = pkgs.callPackage ./pkgs/ng {};
         vde-tmux = pkgs.callPackage ./pkgs/vde-tmux {};
       }
       // nixpkgs.lib.optionalAttrs (pkgs.stdenv.hostPlatform.system == "x86_64-linux") {
@@ -94,6 +96,7 @@
         editprompt = pkgs.callPackage ./pkgs/editprompt {
           bun2nix = bun2nix.packages.${pkgs.stdenv.hostPlatform.system}.default;
         };
+        ng = pkgs.callPackage ./pkgs/ng {};
         vde-tmux = pkgs.callPackage ./pkgs/vde-tmux {};
 
         format = pkgs.runCommand "check-format" {nativeBuildInputs = [pkgs.alejandra];} ''
