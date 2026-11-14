@@ -59,6 +59,7 @@ for package in "${packages[@]}"; do
     echo "Package update file does not exist: $update_file" >&2
     exit 1
   fi
+  nix flake archive --json >/dev/null
   if ! jq -e '.bun2nixUpdate != null' <<<"$config" >/dev/null; then
     nix develop --no-update-lock-file --command \
       nix-update --flake --override-filename "$update_file" "$package"
