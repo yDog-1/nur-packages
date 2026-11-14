@@ -33,10 +33,14 @@
     forAllSystems = f:
       nixpkgs.lib.genAttrs systems (system:
         f (import nixpkgs {inherit system;}));
+    aiUsagebar = pkgs:
+      ai-usagebar.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs (old: {
+        buildInputs = (old.buildInputs or []) ++ [pkgs.sqlite];
+      });
   in {
     overlays.default = final: _prev:
       {
-        ai-usagebar = ai-usagebar.packages.${final.stdenv.hostPlatform.system}.default;
+        ai-usagebar = aiUsagebar final;
         editprompt = final.callPackage ./pkgs/editprompt {
           bun2nix = bun2nix.packages.${final.stdenv.hostPlatform.system}.default;
         };
@@ -49,7 +53,7 @@
 
     packages = forAllSystems (pkgs:
       {
-        ai-usagebar = ai-usagebar.packages.${pkgs.stdenv.hostPlatform.system}.default;
+        ai-usagebar = aiUsagebar pkgs;
         editprompt = pkgs.callPackage ./pkgs/editprompt {
           bun2nix = bun2nix.packages.${pkgs.stdenv.hostPlatform.system}.default;
         };
@@ -81,7 +85,15 @@
           bun2nix.packages.${pkgs.stdenv.hostPlatform.system}.default
           deadnix
           nil
-          nix-update
+          (nix-update.overrideAttrs (old: {
+            postPatch =
+              (old.postPatch or "")
+              + ''
+                substituteInPlace nix_update/options.py \
+                  --replace-fail 'result = subprocess.run(' \
+                    'subprocess.run(["nix", "flake", "archive", "--json"], cwd=import_path, stdout=subprocess.DEVNULL, check=True); result = subprocess.run('
+              '';
+          }))
           pre-commit
           shellcheck
           statix
@@ -92,7 +104,7 @@
 
     checks = forAllSystems (pkgs:
       {
-        ai-usagebar = ai-usagebar.packages.${pkgs.stdenv.hostPlatform.system}.default;
+        ai-usagebar = aiUsagebar pkgs;
         editprompt = pkgs.callPackage ./pkgs/editprompt {
           bun2nix = bun2nix.packages.${pkgs.stdenv.hostPlatform.system}.default;
         };
