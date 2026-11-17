@@ -11,13 +11,13 @@
 }:
 buildGoModule rec {
   pname = "ng";
-  version = "0.8.0";
+  version = "0.10.0";
 
   src = fetchFromGitHub {
     owner = "Shougo";
     repo = "ng";
     tag = "v${version}";
-    hash = "sha256-b+T96sYfTWtXET4uvwTLYo23YFvTi34Otllg7Lf8l8E=";
+    hash = "sha256-8+KL2KyOH8+E3gYbnLJlGd8km0JIcID9JeRX3tYx04w=";
   };
 
   vendorHash = null;
