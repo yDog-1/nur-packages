@@ -7,11 +7,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794778487,
-        "narHash": "sha256-aa7nmKNr9OOhaCdMQGvFxTROoJwkmttpW+UIFuAAPhc=",
+        "lastModified": 1794882133,
+        "narHash": "sha256-pS9bNAq+xKAt7AJLXNF7zVV4g4cMmgT7YMEQHLPbOXA=",
         "owner": "akitaonrails",
         "repo": "ai-usagebar",
-        "rev": "2154e03818b5729a9cd43a0ba0c37d13ae71b8a8",
+        "rev": "699c4dbe4e97100b4afb78e8473d45235c3f907c",
         "type": "github"
       },
       "original": {
